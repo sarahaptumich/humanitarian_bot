@@ -12,8 +12,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain import hub
 import gcsfs
-import os
-from google.cloud import storage  # Optional for debugging GCS access
+from google.cloud import storage
 
 # Set GOOGLE_APPLICATION_CREDENTIALS
 credentials_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
@@ -63,20 +62,31 @@ if submit and query.strip():
             "Keep your answer to ten sentences maximum, be clear and concise. Always end by inviting the user to ask more!"
         )
 
-        # Access GCS bucket using gcsfs
+        # Access GCS bucket and download files locally
         fs = gcsfs.GCSFileSystem()
         bucket_name = "humanitarian_bucket"
+        chroma_db_path = "/tmp/chroma_db_persist"  # Local directory for Chroma persistence
 
-        # Mount the chroma_db_persist directory
-        chroma_db_path = f"{bucket_name}/chroma_db_persist"
+        # Ensure local directory exists
+        os.makedirs(chroma_db_path, exist_ok=True)
+
+        try:
+            # List files in the GCS bucket and download to local directory
+            files = fs.ls(f"{bucket_name}/chroma_db_persist/")
+            st.write(f"Files in bucket '{bucket_name}/chroma_db_persist': {files}")
+            
+            for file_path in files:
+                local_file_path = os.path.join(chroma_db_path, os.path.basename(file_path))
+                fs.get(file_path, local_file_path)
+        except Exception as e:
+            st.error(f"Error accessing or downloading from bucket: {e}")
 
         # Initialize embeddings and vector store
         embeddings = HuggingFaceEmbeddings(model_name="BAAI/bge-base-en-v1.5")
         vectorstore = Chroma(
             embedding_function=embeddings,
             persist_directory=chroma_db_path,
-            collection_name="nonprofit_reports",
-            filesystem=fs
+            collection_name="nonprofit_reports"
         )
 
         # Hypothetical document generation prompt
