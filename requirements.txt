@@ -1,25 +1,17 @@
-# Core Dependencies
 streamlit==1.41.0
 python-dotenv==1.0.1
 pandas==2.2.3
 numpy==1.26.4
 gcsfs==2024.10.0
-
-# LangChain and Chroma
 langchain==0.3.11
 langchain-google-genai==2.0.6
 langchain-huggingface==0.1.2
 langchain-chroma==0.1.4
 chromadb==0.5.18
-
-# Hugging Face and Transformers
 huggingface-hub==0.23.5
 transformers==4.46.3
 torch==2.5.1
-
-# Google Generative AI
 google-generativeai==0.8.0
-
-# Utilities
 tenacity==8.5.0
 requests==2.32.3
+pysqlite3-binary
