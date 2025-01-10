@@ -1,44 +1,15 @@
-# Core Libraries
 streamlit==1.41.0
 python-dotenv==1.0.1
 pandas==2.2.3
 numpy==1.26.4
-
-# LangChain and Dependencies
-langchain==0.3.11
 langchain-google-genai==2.0.6
+google-generativeai==0.8.0
 langchain-huggingface==0.1.2
 langchain-chroma==0.1.4
-langchain-text-splitters==0.3.2
 chromadb==0.5.18
-chroma-hnswlib==0.7.6
-
-# Llama-Index and Dependencies
-llama-index==0.12.1
-######llama-index-llms-gemini==0.3.7
-llama-index-embeddings-huggingface==0.4.0
-llama-index-vector-stores-chroma==0.3.0
-
-# Hugging Face and Transformers
+gcsfs==2024.10.0
 huggingface-hub==0.23.5
 transformers==4.46.3
 torch==2.5.1
-torchvision==0.20.1
-
-# Google APIs and Generative AI
-google-api-core==2.23.0
-google-auth==2.36.0
-google-auth-httplib2==0.2.0
-google-generativeai==0.8.0  # Updated to meet requirements of langchain-google-genai
-
-# Other Core Libraries
-altair==5.4.1
-sentence-transformers==2.7.0
-fsspec==2024.10.0
-gcsfs==2024.10.0
 tenacity==8.5.0
 requests==2.32.3
-scikit-learn==1.5.2
-grpcio==1.67.1
-protobuf==4.25.5
-aiohttp==3.11.0
