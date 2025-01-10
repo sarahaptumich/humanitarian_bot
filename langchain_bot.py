@@ -1,3 +1,6 @@
+import pysqlite3
+import sys
+sys.modules["sqlite3"] = pysqlite3
 import os
 from dotenv import load_dotenv
 import streamlit as st
