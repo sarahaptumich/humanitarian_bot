@@ -15,7 +15,7 @@ chroma-hnswlib==0.7.6
 
 # Llama-Index and Dependencies
 llama-index==0.12.1
-llama-index-llms-gemini==0.3.7
+######llama-index-llms-gemini==0.3.7
 llama-index-embeddings-huggingface==0.4.0
 llama-index-vector-stores-chroma==0.3.0
 
