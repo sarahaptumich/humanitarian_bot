@@ -50,7 +50,6 @@ if submit and query.strip():
 
         # Mount the chroma_db_persist directory
         chroma_db_path = f"{bucket_name}/chroma_db_persist"
-        analysis_path = f"{bucket_name}/analysis"
 
         # Initialize embeddings and vector store
         embeddings = HuggingFaceEmbeddings(model_name="BAAI/bge-base-en-v1.5")
@@ -73,7 +72,7 @@ Be factual and topic-focused, even if you have to guess based on general knowled
         ])
 
         # Initialize the LLM for hypothetical document generation
-        hypo_llm = ChatGoogleGenerativeAI(model=selected_model, temperature=0)
+        hypo_llm = ChatGoogleGenerativeAI(model=selected_model, temperature=0, api_key=google_api_key)
         qa_no_context = hypo_prompt | hypo_llm | StrOutputParser()
 
         # Generate the hypothetical document
@@ -88,7 +87,7 @@ Be factual and topic-focused, even if you have to guess based on general knowled
             docs = vectorstore.similarity_search_by_vector(hypothetical_embedding, k=max_docs)
 
         # Prepare the final chain using the selected model
-        final_llm = ChatGoogleGenerativeAI(model=selected_model, temperature=temperature)
+        final_llm = ChatGoogleGenerativeAI(model=selected_model, temperature=temperature, api_key=google_api_key)
         retrieval_qa_chat_prompt = hub.pull("langchain-ai/retrieval-qa-chat")
 
         # Create the chain to combine documents and generate the final answer
@@ -121,15 +120,6 @@ Be factual and topic-focused, even if you have to guess based on general knowled
             st.write(f"**Page #:** {page_label}")
             st.write(f"**Date Created:** {created_date}")
             st.write(f"**Country:** {country}")
-
-            # Add a link to open the PDF if available
-            if 'file_path' in metadata:
-                file_name = metadata['file_path'].split('/')[-1]
-                file_url = f"http://localhost:8502/{file_name}"
-                st.markdown(
-                    f"<a href='{file_url}' target='_blank'>Open PDF</a>",
-                    unsafe_allow_html=True
-                )
 
             # Expanders to show page content and metadata JSON
             with st.expander("Show Page Content"):
