@@ -8,6 +8,7 @@ from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain import hub
+import gcsfs
 
 # Configure Streamlit page
 st.set_page_config(page_title="Humanitarian ChatBot", page_icon=":earth_americas:")
@@ -43,12 +44,21 @@ if submit and query.strip():
             "Keep your answer to ten sentences maximum, be clear and concise. Always end by inviting the user to ask more!"
         )
 
+        # Access GCS bucket using gcsfs
+        fs = gcsfs.GCSFileSystem()
+        bucket_name = "humanitarian_bucket"
+
+        # Mount the chroma_db_persist directory
+        chroma_db_path = f"{bucket_name}/chroma_db_persist"
+        analysis_path = f"{bucket_name}/analysis"
+
         # Initialize embeddings and vector store
         embeddings = HuggingFaceEmbeddings(model_name="BAAI/bge-base-en-v1.5")
         vectorstore = Chroma(
             embedding_function=embeddings,
-            persist_directory="./chroma_db_persist",
-            collection_name="nonprofit_reports"
+            persist_directory=chroma_db_path,
+            collection_name="nonprofit_reports",
+            filesystem=fs
         )
 
         # Hypothetical document generation prompt
@@ -69,7 +79,6 @@ Be factual and topic-focused, even if you have to guess based on general knowled
         # Generate the hypothetical document
         with st.spinner("Optimizing query..."):
             hypothetical_doc = qa_no_context.invoke({"question": query})
-            # hypothetical_doc is a string
 
         # Embed the hypothetical document
         hypothetical_embedding = embeddings.embed_query(hypothetical_doc)
@@ -87,12 +96,6 @@ Be factual and topic-focused, even if you have to guess based on general knowled
             llm=final_llm,
             prompt=retrieval_qa_chat_prompt
         )
-
-        # Display what is sent to the LLM
-        # st.subheader("Data Sent to LLM")
-        # st.write("**Context Documents:**", docs)
-        # st.write("**System Prompt:**", system_prompt)
-        # st.write("**User Question:**", query)
 
         # Generate the final answer by invoking the chain with the context and user input
         with st.spinner("Creating final answer..."):
