@@ -12,6 +12,22 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain import hub
 import gcsfs
+import os
+from google.cloud import storage  # Optional for debugging GCS access
+
+# Set GOOGLE_APPLICATION_CREDENTIALS
+credentials_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+if not credentials_path:
+    raise EnvironmentError("GOOGLE_APPLICATION_CREDENTIALS environment variable is not set.")
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
+
+# Debug GCS access
+client = storage.Client()
+try:
+    buckets = list(client.list_buckets())
+    print("Buckets available:", [bucket.name for bucket in buckets])
+except Exception as e:
+    print(f"Error accessing GCS: {e}")
 
 # Configure Streamlit page
 st.set_page_config(page_title="Humanitarian ChatBot", page_icon=":earth_americas:")
