@@ -51,7 +51,7 @@ st.sidebar.header("Settings")
 
 # Model selection and configuration
 model_options = ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-1.5-pro"]
-selected_model = st.sidebar.selectbox("Select Final LLM Model for Answer", model_options, index=0)
+selected_model = st.sidebar.selectbox("Select LLM Model for Answer", model_options, index=0)
 temperature = st.sidebar.slider("Model Temperature", 0.0, 1.0, 0.5, 0.05)
 max_docs = st.sidebar.slider("Maximum number of documents", 1, 10, 3, 1)
 
@@ -170,7 +170,7 @@ Be factual and topic-focused, even if you have to guess based on general knowled
         
             # Display a clickable link to open the PDF in a new tab
             st.markdown(
-                f"[**Open PDF **]({public_url})",
+                f"[**Open PDF**]({public_url})",
                 unsafe_allow_html=True,
             )
         
