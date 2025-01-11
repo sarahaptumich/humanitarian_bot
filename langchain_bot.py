@@ -151,11 +151,11 @@ Be factual and topic-focused, even if you have to guess based on general knowled
         # Display the retrieved documents with metadata
         st.subheader("Retrieved Documents")
         for i, doc in enumerate(docs, start=1):
-        metadata = doc.metadata or {}
-        title = metadata.get('title', 'No title available')
-        page_label = metadata.get('page_label', 'N/A')
-        created_date = metadata.get('date.created', 'N/A')
-        country = metadata.get('country', 'N/A')
+            metadata = doc.metadata or {}
+            title = metadata.get('title', 'No title available')
+            page_label = metadata.get('page_label', 'N/A')
+            created_date = metadata.get('date.created', 'N/A')
+            country = metadata.get('country', 'N/A')
         
         st.write(f"**Document {i}: {title}**")
         st.write(f"**Page #:** {page_label}")
