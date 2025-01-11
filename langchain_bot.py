@@ -2,8 +2,8 @@ import pysqlite3
 import sys
 sys.modules["sqlite3"] = pysqlite3
 import os
-from dotenv import load_dotenv
 import streamlit as st
+from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
@@ -14,23 +14,33 @@ from langchain import hub
 import gcsfs
 from google.cloud import storage
 
-# Set GOOGLE_APPLICATION_CREDENTIALS
-credentials_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS_JSON")
-if not credentials_path:
-    raise EnvironmentError("GOOGLE_APPLICATION_CREDENTIALS environment variable is not set.")
-os.environ["GOOGLE_APPLICATION_CREDENTIALS_JSON"] = credentials_path
+# Configure Streamlit page
+st.set_page_config(page_title="Humanitarian ChatBot", page_icon=":earth_americas:")
+st.title("Humanitarian ChatBot")
+
+# Set GOOGLE_APPLICATION_CREDENTIALS dynamically
+try:
+    # Retrieve the service account JSON key from Streamlit secrets
+    service_account_json = st.secrets["general"]["GOOGLE_APPLICATION_CREDENTIALS_JSON"]
+
+    # Write the JSON key to a temporary file
+    temp_credentials_path = "/tmp/service_account_key.json"
+    with open(temp_credentials_path, "w") as f:
+        f.write(service_account_json)
+
+    # Set the environment variable for Google Cloud SDK
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = temp_credentials_path
+except Exception as e:
+    st.error("Failed to set GOOGLE_APPLICATION_CREDENTIALS. Check your secrets configuration.")
+    st.stop()
 
 # Debug GCS access
 client = storage.Client()
 try:
     buckets = list(client.list_buckets())
-    print("Buckets available:", [bucket.name for bucket in buckets])
+    st.write(f"Buckets available: {[bucket.name for bucket in buckets]}")
 except Exception as e:
-    print(f"Error accessing GCS: {e}")
-
-# Configure Streamlit page
-st.set_page_config(page_title="Humanitarian ChatBot", page_icon=":earth_americas:")
-st.title("Humanitarian ChatBot")
+    st.error(f"Error accessing GCS: {e}")
 
 # Sidebar settings
 st.sidebar.image("humanitarian_bot.jpeg")
@@ -48,11 +58,10 @@ query = st.text_input("Your question", "")
 submit = st.button("Submit")
 
 if submit and query.strip():
-    load_dotenv()
-    google_api_key = os.getenv("GOOGLE_API_KEY")
+    google_api_key = st.secrets["general"].get("GOOGLE_API_KEY")
     
     if not google_api_key:
-        st.error("Google API key not found. Please set the GOOGLE_API_KEY environment variable.")
+        st.error("Google API key not found. Please set the GOOGLE_API_KEY in your secrets.")
     else:
         # System prompt for the final answer
         system_prompt = (
