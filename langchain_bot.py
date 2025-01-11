@@ -170,7 +170,7 @@ Be factual and topic-focused, even if you have to guess based on general knowled
         
             # Display a clickable link to open the PDF in a new tab
             st.markdown(
-                f"[**Open PDF in a new tab**]({public_url})",
+                f"[**Open PDF **]({public_url})",
                 unsafe_allow_html=True,
             )
         
