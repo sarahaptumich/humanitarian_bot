@@ -18,7 +18,7 @@ from google.cloud import storage
 credentials_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS_JSON")
 if not credentials_path:
     raise EnvironmentError("GOOGLE_APPLICATION_CREDENTIALS environment variable is not set.")
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
+os.environ["GOOGLE_APPLICATION_CREDENTIALS_JSON"] = credentials_path
 
 # Debug GCS access
 client = storage.Client()
