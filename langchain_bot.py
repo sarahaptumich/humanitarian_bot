@@ -157,10 +157,10 @@ Be factual and topic-focused, even if you have to guess based on general knowled
             created_date = metadata.get('date.created', 'N/A')
             country = metadata.get('country', 'N/A')
         
-        st.write(f"**Document {i}: {title}**")
-        st.write(f"**Page #:** {page_label}")
-        st.write(f"**Date Created:** {created_date}")
-        st.write(f"**Country:** {country}")
+            st.write(f"**Document {i}: {title}**")
+            st.write(f"**Page #:** {page_label}")
+            st.write(f"**Date Created:** {created_date}")
+            st.write(f"**Country:** {country}")
         
         # Add a link to open the PDF if available and embed a viewer
         # Add a link to open the PDF if available and embed a viewer
