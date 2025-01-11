@@ -20,7 +20,6 @@ st.title("Humanitarian ChatBot")
 
 # Set GOOGLE_APPLICATION_CREDENTIALS dynamically
 try:
-    # Retrieve the service account JSON key from Streamlit secrets
     service_account_json = st.secrets["general"]["GOOGLE_APPLICATION_CREDENTIALS_JSON"]
 
     # Write the JSON key to a temporary file
@@ -30,8 +29,12 @@ try:
 
     # Set the environment variable for Google Cloud SDK
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = temp_credentials_path
+    st.write("GOOGLE_APPLICATION_CREDENTIALS set successfully.")
+except KeyError:
+    st.error("The GOOGLE_APPLICATION_CREDENTIALS_JSON key is missing in your Streamlit secrets.")
+    st.stop()
 except Exception as e:
-    st.error("Failed to set GOOGLE_APPLICATION_CREDENTIALS. Check your secrets configuration.")
+    st.error(f"An unexpected error occurred: {e}")
     st.stop()
 
 # Debug GCS access
