@@ -29,7 +29,7 @@ try:
 
     # Set the environment variable for Google Cloud SDK
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = temp_credentials_path
-    st.write("GOOGLE_APPLICATION_CREDENTIALS set successfully.")
+    # st.write("GOOGLE_APPLICATION_CREDENTIALS set successfully.")  # Debug message commented out
 except KeyError:
     st.error("The GOOGLE_APPLICATION_CREDENTIALS_JSON key is missing in your Streamlit secrets.")
     st.stop()
@@ -41,7 +41,7 @@ except Exception as e:
 client = storage.Client()
 try:
     buckets = list(client.list_buckets())
-    st.write(f"Buckets available: {[bucket.name for bucket in buckets]}")
+    # st.write(f"Buckets available: {[bucket.name for bucket in buckets]}")  # Debug message commented out
 except Exception as e:
     st.error(f"Error accessing GCS: {e}")
 
@@ -85,7 +85,7 @@ if submit and query.strip():
         try:
             # List files in the GCS bucket and download to local directory
             files = fs.ls(f"{bucket_name}/chroma_db_persist/")
-            st.write(f"Files in bucket '{bucket_name}/chroma_db_persist': {files}")
+            # st.write(f"Files in bucket '{bucket_name}/chroma_db_persist': {files}")  # Debug message commented out
             
             for file_path in files:
                 local_file_path = os.path.join(chroma_db_path, os.path.basename(file_path))
