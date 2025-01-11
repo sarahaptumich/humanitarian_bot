@@ -162,20 +162,20 @@ Be factual and topic-focused, even if you have to guess based on general knowled
             st.write(f"**Date Created:** {created_date}")
             st.write(f"**Country:** {country}")
         
-        # Add a link to open the PDF if available and embed a viewer
-        # Add a link to open the PDF if available and embed a viewer
-        if 'file_path' in metadata:
-            file_name = metadata['file_path'].split('/')[-1]
-            public_url = f"https://storage.googleapis.com/{bucket_name}/analysis/{file_name}"  # Adjust as needed
         
-            # Display a clickable link to open the PDF in a new tab
-            st.markdown(
-                f"[**Open PDF**]({public_url})",
-                unsafe_allow_html=True,
-            )
-        
-        # Expanders to show page content and metadata JSON
-        with st.expander("Show Page Content"):
-            st.write(doc.page_content)
-        with st.expander("Show Metadata JSON"):
-            st.json(metadata)
+            # link to open the PDF if available and embed a viewer
+            if 'file_path' in metadata:
+                file_name = metadata['file_path'].split('/')[-1]
+                public_url = f"https://storage.googleapis.com/{bucket_name}/analysis/{file_name}"  # Adjust as needed
+            
+                # Display a clickable link to open the PDF in a new tab
+                st.markdown(
+                    f"[**Open PDF**]({public_url})",
+                    unsafe_allow_html=True,
+                )
+            
+            # Expanders to show page content and metadata JSON
+            with st.expander("Show Page Content"):
+                st.write(doc.page_content)
+            with st.expander("Show Metadata JSON"):
+                st.json(metadata)
