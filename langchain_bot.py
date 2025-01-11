@@ -151,19 +151,31 @@ Be factual and topic-focused, even if you have to guess based on general knowled
         # Display the retrieved documents with metadata
         st.subheader("Retrieved Documents")
         for i, doc in enumerate(docs, start=1):
-            metadata = doc.metadata or {}
-            title = metadata.get('title', 'No title available')
-            page_label = metadata.get('page_label', 'N/A')
-            created_date = metadata.get('date.created', 'N/A')
-            country = metadata.get('country', 'N/A')
-            
-            st.write(f"**Document {i}: {title}**")
-            st.write(f"**Page #:** {page_label}")
-            st.write(f"**Date Created:** {created_date}")
-            st.write(f"**Country:** {country}")
-
-            # Expanders to show page content and metadata JSON
-            with st.expander("Show Page Content"):
-                st.write(doc.page_content)
-            with st.expander("Show Metadata JSON"):
-                st.json(metadata)
+        metadata = doc.metadata or {}
+        title = metadata.get('title', 'No title available')
+        page_label = metadata.get('page_label', 'N/A')
+        created_date = metadata.get('date.created', 'N/A')
+        country = metadata.get('country', 'N/A')
+        
+        st.write(f"**Document {i}: {title}**")
+        st.write(f"**Page #:** {page_label}")
+        st.write(f"**Date Created:** {created_date}")
+        st.write(f"**Country:** {country}")
+        
+        # Add a link to open the PDF if available and embed a viewer
+        # Add a link to open the PDF if available and embed a viewer
+        if 'file_path' in metadata:
+            file_name = metadata['file_path'].split('/')[-1]
+            public_url = f"https://storage.googleapis.com/{bucket_name}/analysis/{file_name}"  # Adjust as needed
+        
+            # Display a clickable link to open the PDF in a new tab
+            st.markdown(
+                f"[**Open PDF in a new tab**]({public_url})",
+                unsafe_allow_html=True,
+            )
+        
+        # Expanders to show page content and metadata JSON
+        with st.expander("Show Page Content"):
+            st.write(doc.page_content)
+        with st.expander("Show Metadata JSON"):
+            st.json(metadata)
