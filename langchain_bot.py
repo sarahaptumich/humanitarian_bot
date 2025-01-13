@@ -97,7 +97,12 @@ if submit and query.strip():
             persist_directory=chroma_db_path,
             collection_name="nonprofit_reports"
         )
-
+        #####Debugging line #############
+        # Add the document count display here
+        st.subheader("Chroma Database Document Count")
+        document_count = len(vectorstore._collection.get()['documents'])
+        st.write(f"Total documents in Chroma database: {document_count}")
+        #####Debugging line #############        
         # Retrieve relevant documents directly using the user query
         with st.spinner("Retrieving relevant documents..."):
             docs = vectorstore.similarity_search(query, k=max_docs)
