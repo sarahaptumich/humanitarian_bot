@@ -106,27 +106,24 @@ if submit and query.strip():
         with st.spinner("Retrieving relevant documents..."):
             docs = vectorstore.similarity_search(query, k=max_docs)
         
-        # Display the similarity scores of retrieved documents
+       # Calculate similarity scores for retrieved documents only
         st.subheader("Similarity Scores of Retrieved Documents")
         query_embedding = embeddings.embed_query(query)  # Compute the query embedding
-        doc_embeddings = vectorstore._collection.get_embeddings()  # Retrieve all document embeddings
-        similarity_scores = [
-            np.dot(query_embedding, doc_embedding) for doc_embedding in doc_embeddings
-        ]
-        
-        # Match similarity scores with retrieved documents
         retrieved_scores = []
-        for doc in docs:
-            # Match document content and compute similarity for displayed documents
-            index = all_docs['documents'].index(doc.page_content)
-            retrieved_scores.append((doc, similarity_scores[index]))
         
-        # Display the retrieved documents and their scores
+        # Iterate over the retrieved documents and compute similarity scores
+        for doc in docs:
+            doc_embedding = embeddings.embed_query(doc.page_content)  # Recompute document embedding
+            similarity = np.dot(query_embedding, doc_embedding)  # Calculate similarity
+            retrieved_scores.append((doc, similarity))
+        
+        # Display the retrieved documents and their similarity scores
         for i, (doc, score) in enumerate(retrieved_scores, start=1):
-            st.write(f"**Document {i}**:")
+            st.write(f"**Document {i}:**")
             st.write(f"**Similarity Score:** {score:.4f}")
             st.write(f"**Metadata:** {doc.metadata}")
             st.write(f"**Content Preview:** {doc.page_content[:500]}...")  # Show the first 500 characters
+
 
         
         #####Debugging line #############
