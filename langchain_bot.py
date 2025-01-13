@@ -107,6 +107,32 @@ if submit and query.strip():
         with st.spinner("Retrieving relevant documents..."):
             docs = vectorstore.similarity_search(query, k=max_docs)
 
+        #####Debugging line #############
+        query_embedding = embeddings.embed_query(query)
+        st.write("Query Embedding Vector (first 10 values):", query_embedding[:10])
+        doc_embeddings = vectorstore._collection.get_embeddings()
+        similarity_scores = [
+            np.dot(query_embedding, doc_embedding) for doc_embedding in doc_embeddings
+        ]
+        sorted_scores = sorted(
+            enumerate(similarity_scores),
+            key=lambda x: x[1],
+            reverse=True
+        )
+        for idx, score in sorted_scores[:max_docs]:  # Limit to top `k` results
+            metadata = vectorstore._collection.get(include=['metadatas'])['metadatas'][idx]
+            st.write(f"Document {idx + 1}: Score={score:.4f}, Metadata={metadata}")
+
+        for i, doc in enumerate(docs, start=1):
+        st.write(f"Retrieved Document {i}:")
+        st.write(f"Metadata: {doc.metadata}")
+        st.write(f"Content Preview: {doc.page_content[:500]}")  # Show the first 500 characters
+
+
+        
+        
+        #####Debugging line #############
+
         # Prepare the final chain using the selected model
         final_llm = ChatGoogleGenerativeAI(model=selected_model, temperature=temperature, api_key=google_api_key)
         retrieval_qa_chat_prompt = hub.pull("langchain-ai/retrieval-qa-chat")
