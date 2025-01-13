@@ -59,6 +59,19 @@ st.write("Ask a question about the nonprofit reports:")
 query = st.text_input("Your question", "")
 submit = st.button("Submit")
 
+# Cache ChromaDB Initialization
+@st.cache_data(persist="disk")
+def initialize_chroma(embedding_model_name, chroma_db_path):
+    # Initialize embeddings
+    embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
+    # Initialize vector store
+    vectorstore = Chroma(
+        embedding_function=embeddings,
+        persist_directory=chroma_db_path,
+        collection_name="nonprofit_reports"
+    )
+    return vectorstore, embeddings
+
 if submit and query.strip():
     google_api_key = st.secrets["general"].get("GOOGLE_API_KEY")
     
@@ -83,21 +96,17 @@ if submit and query.strip():
 
         try:
             # List files in the GCS bucket and download to local directory
-            files = fs.ls(f"{bucket_name}/chroma_db_persist/")
-            
+            files = fs.find(f"{bucket_name}/chroma_db_persist/")
             for file_path in files:
                 local_file_path = os.path.join(chroma_db_path, os.path.basename(file_path))
                 fs.get(file_path, local_file_path)
+            st.success(f"Downloaded {len(files)} files from GCS.")
         except Exception as e:
             st.error(f"Error accessing or downloading from bucket: {e}")
 
-        # Initialize embeddings and vector store
-        embeddings = HuggingFaceEmbeddings(model_name="BAAI/bge-base-en-v1.5")
-        vectorstore = Chroma(
-            embedding_function=embeddings,
-            persist_directory=chroma_db_path,
-            collection_name="nonprofit_reports"
-        )
+        # Initialize Chroma database
+        vectorstore, embeddings = initialize_chroma("BAAI/bge-base-en-v1.5", chroma_db_path)
+        st.success("Chroma database initialized.")
 
         ##### Hypothetical Question Generation #####
         st.subheader("Hypothetical Question Generation")
