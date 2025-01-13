@@ -124,9 +124,9 @@ if submit and query.strip():
             st.write(f"Document {idx + 1}: Score={score:.4f}, Metadata={metadata}")
 
         for i, doc in enumerate(docs, start=1):
-        st.write(f"Retrieved Document {i}:")
-        st.write(f"Metadata: {doc.metadata}")
-        st.write(f"Content Preview: {doc.page_content[:500]}")  # Show the first 500 characters
+            st.write(f"Retrieved Document {i}:")
+            st.write(f"Metadata: {doc.metadata}")
+            st.write(f"Content Preview: {doc.page_content[:500]}")  # Show the first 500 characters
 
 
         
