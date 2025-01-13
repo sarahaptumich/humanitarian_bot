@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
-from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain_chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain import hub
@@ -29,7 +29,6 @@ try:
 
     # Set the environment variable for Google Cloud SDK
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = temp_credentials_path
-    # st.write("GOOGLE_APPLICATION_CREDENTIALS set successfully.")  # Debug message commented out
 except KeyError:
     st.error("The GOOGLE_APPLICATION_CREDENTIALS_JSON key is missing in your Streamlit secrets.")
     st.stop()
@@ -41,7 +40,6 @@ except Exception as e:
 client = storage.Client()
 try:
     buckets = list(client.list_buckets())
-    # st.write(f"Buckets available: {[bucket.name for bucket in buckets]}")  # Debug message commented out
 except Exception as e:
     st.error(f"Error accessing GCS: {e}")
 
@@ -85,7 +83,6 @@ if submit and query.strip():
         try:
             # List files in the GCS bucket and download to local directory
             files = fs.ls(f"{bucket_name}/chroma_db_persist/")
-            # st.write(f"Files in bucket '{bucket_name}/chroma_db_persist': {files}")  # Debug message commented out
             
             for file_path in files:
                 local_file_path = os.path.join(chroma_db_path, os.path.basename(file_path))
@@ -101,31 +98,9 @@ if submit and query.strip():
             collection_name="nonprofit_reports"
         )
 
-        # Hypothetical document generation prompt
-        hypo_system_prompt = """You are an expert about humanitarian information from ReliefWeb.
-Answer the user's question as best you can, as though you were writing a reference document.
-Be factual and topic-focused, even if you have to guess based on general knowledge."""
-
-        # Create the prompt template for hypothetical document generation
-        hypo_prompt = ChatPromptTemplate.from_messages([
-            ("system", hypo_system_prompt),
-            ("human", "{question}")
-        ])
-
-        # Initialize the LLM for hypothetical document generation
-        hypo_llm = ChatGoogleGenerativeAI(model=selected_model, temperature=0, api_key=google_api_key)
-        qa_no_context = hypo_prompt | hypo_llm | StrOutputParser()
-
-        # Generate the hypothetical document
-        with st.spinner("Optimizing query..."):
-            hypothetical_doc = qa_no_context.invoke({"question": query})
-
-        # Embed the hypothetical document
-        hypothetical_embedding = embeddings.embed_query(hypothetical_doc)
-
-        # Retrieve relevant documents using the hypothetical embedding
+        # Retrieve relevant documents directly using the user query
         with st.spinner("Retrieving relevant documents..."):
-            docs = vectorstore.similarity_search_by_vector(hypothetical_embedding, k=max_docs)
+            docs = vectorstore.similarity_search(query, k=max_docs)
 
         # Prepare the final chain using the selected model
         final_llm = ChatGoogleGenerativeAI(model=selected_model, temperature=temperature, api_key=google_api_key)
@@ -162,8 +137,7 @@ Be factual and topic-focused, even if you have to guess based on general knowled
             st.write(f"**Date Created:** {created_date}")
             st.write(f"**Country:** {country}")
         
-        
-            # link to open the PDF if available and embed a viewer
+            # Link to open the PDF if available and embed a viewer
             if 'file_path' in metadata:
                 file_name = metadata['file_path'].split('/')[-1]
                 public_url = f"https://storage.googleapis.com/{bucket_name}/analysis/{file_name}"  # Adjust as needed
@@ -179,3 +153,4 @@ Be factual and topic-focused, even if you have to guess based on general knowled
                 st.write(doc.page_content)
             with st.expander("Show Metadata JSON"):
                 st.json(metadata)
+
