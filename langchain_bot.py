@@ -1,8 +1,65 @@
-# Additional imports for debugging
+import pysqlite3
+import sys
+sys.modules["sqlite3"] = pysqlite3
+import os
+import streamlit as st
+from dotenv import load_dotenv
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_chroma import Chroma
+from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain import hub
+import gcsfs
+from google.cloud import storage
 import numpy as np
 
-# Updated Streamlit code
+# Configure Streamlit page
+st.set_page_config(page_title="Humanitarian ChatBot", page_icon=":earth_americas:")
+st.title("Humanitarian ChatBot")
 
+# Set GOOGLE_APPLICATION_CREDENTIALS dynamically
+try:
+    service_account_json = st.secrets["general"]["GOOGLE_APPLICATION_CREDENTIALS_JSON"]
+
+    # Write the JSON key to a temporary file
+    temp_credentials_path = "/tmp/service_account_key.json"
+    with open(temp_credentials_path, "w") as f:
+        f.write(service_account_json)
+
+    # Set the environment variable for Google Cloud SDK
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = temp_credentials_path
+except KeyError:
+    st.error("The GOOGLE_APPLICATION_CREDENTIALS_JSON key is missing in your Streamlit secrets.")
+    st.stop()
+except Exception as e:
+    st.error(f"An unexpected error occurred: {e}")
+    st.stop()
+
+# Debug GCS access
+client = storage.Client()
+try:
+    buckets = list(client.list_buckets())
+except Exception as e:
+    st.error(f"Error accessing GCS: {e}")
+
+# Sidebar settings
+st.sidebar.image("humanitarian_bot.jpeg")
+st.sidebar.header("Settings")
+
+# Model selection and configuration
+model_options = ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-1.5-pro"]
+selected_model = st.sidebar.selectbox("Select LLM Model for Answer", model_options, index=0)
+temperature = st.sidebar.slider("Model Temperature", 0.0, 1.0, 0.5, 0.05)
+max_docs = st.sidebar.slider("Maximum number of documents", 1, 10, 3, 1)
+
+# User input
+st.write("Ask a question about the nonprofit reports:")
+query = st.text_input("Your question", "")  # Input for user query
+submit = st.button("Submit")  # Button to submit the query
+
+# Check if the user submitted a query
 if submit and query.strip():
     google_api_key = st.secrets["general"].get("GOOGLE_API_KEY")
     
@@ -132,5 +189,4 @@ if submit and query.strip():
                 st.write(doc.page_content)
             with st.expander("Show Metadata JSON"):
                 st.json(metadata)
-
 
