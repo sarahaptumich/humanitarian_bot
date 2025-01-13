@@ -3,6 +3,7 @@ import sys
 sys.modules["sqlite3"] = pysqlite3
 import os
 import streamlit as st
+import numpy as np
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_huggingface import HuggingFaceEmbeddings
