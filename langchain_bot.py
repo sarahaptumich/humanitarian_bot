@@ -1,62 +1,7 @@
-import pysqlite3
-import sys
-sys.modules["sqlite3"] = pysqlite3
-import os
-import streamlit as st
-from dotenv import load_dotenv
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_chroma import Chroma
-from langchain.chains.combine_documents import create_stuff_documents_chain
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
-from langchain import hub
-import gcsfs
-from google.cloud import storage
+# Additional imports for debugging
+import numpy as np
 
-# Configure Streamlit page
-st.set_page_config(page_title="Humanitarian ChatBot", page_icon=":earth_americas:")
-st.title("Humanitarian ChatBot")
-
-# Set GOOGLE_APPLICATION_CREDENTIALS dynamically
-try:
-    service_account_json = st.secrets["general"]["GOOGLE_APPLICATION_CREDENTIALS_JSON"]
-
-    # Write the JSON key to a temporary file
-    temp_credentials_path = "/tmp/service_account_key.json"
-    with open(temp_credentials_path, "w") as f:
-        f.write(service_account_json)
-
-    # Set the environment variable for Google Cloud SDK
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = temp_credentials_path
-except KeyError:
-    st.error("The GOOGLE_APPLICATION_CREDENTIALS_JSON key is missing in your Streamlit secrets.")
-    st.stop()
-except Exception as e:
-    st.error(f"An unexpected error occurred: {e}")
-    st.stop()
-
-# Debug GCS access
-client = storage.Client()
-try:
-    buckets = list(client.list_buckets())
-except Exception as e:
-    st.error(f"Error accessing GCS: {e}")
-
-# Sidebar settings
-st.sidebar.image("humanitarian_bot.jpeg")
-st.sidebar.header("Settings")
-
-# Model selection and configuration
-model_options = ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-1.5-pro"]
-selected_model = st.sidebar.selectbox("Select LLM Model for Answer", model_options, index=0)
-temperature = st.sidebar.slider("Model Temperature", 0.0, 1.0, 0.5, 0.05)
-max_docs = st.sidebar.slider("Maximum number of documents", 1, 10, 3, 1)
-
-# User input
-st.write("Ask a question about the nonprofit reports:")
-query = st.text_input("Your question", "")
-submit = st.button("Submit")
+# Updated Streamlit code
 
 if submit and query.strip():
     google_api_key = st.secrets["general"].get("GOOGLE_API_KEY")
@@ -98,9 +43,43 @@ if submit and query.strip():
             collection_name="nonprofit_reports"
         )
 
+        # Debug: Display all documents in the database
+        st.subheader("Chroma Database Debugging")
+        all_docs = vectorstore._collection.get(include=['metadatas', 'documents'])
+        st.write(f"Total documents in Chroma collection: {len(all_docs['documents'])}")
+        for i, (doc, metadata) in enumerate(zip(all_docs['documents'], all_docs['metadatas']), start=1):
+            st.write(f"**Document {i}:**")
+            st.write(f"**Metadata:** {metadata}")
+            st.write(f"**Content Preview:** {doc[:500]}...")  # Display first 500 characters of content
+
+        # Debug: Query embedding
+        query_embedding = embeddings.embed_query(query)
+        st.write("Query Embedding Vector (first 10 values):", query_embedding[:10])
+
+        # Debug: Calculate similarity scores for all documents
+        st.subheader("Document Similarity Scores")
+        doc_embeddings = vectorstore._collection.get_embeddings()
+        similarity_scores = [
+            np.dot(query_embedding, doc_embedding) for doc_embedding in doc_embeddings
+        ]
+        sorted_scores = sorted(
+            enumerate(similarity_scores),
+            key=lambda x: x[1],
+            reverse=True
+        )
+        for idx, score in sorted_scores:
+            metadata = all_docs['metadatas'][idx]
+            st.write(f"Document {idx + 1}: Score={score:.4f}, Metadata={metadata}")
+
         # Retrieve relevant documents directly using the user query
         with st.spinner("Retrieving relevant documents..."):
             docs = vectorstore.similarity_search(query, k=max_docs)
+        
+        # Debug: Retrieved documents and their scores
+        st.subheader("Retrieved Documents with Scores")
+        for i, doc in enumerate(docs, start=1):
+            st.write(f"**Document {i} Metadata:** {doc.metadata}")
+            st.write(f"**Content Preview:** {doc.page_content[:500]}...")  # Display first 500 characters
 
         # Prepare the final chain using the selected model
         final_llm = ChatGoogleGenerativeAI(model=selected_model, temperature=temperature, api_key=google_api_key)
@@ -153,4 +132,5 @@ if submit and query.strip():
                 st.write(doc.page_content)
             with st.expander("Show Metadata JSON"):
                 st.json(metadata)
+
 
