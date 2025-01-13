@@ -98,36 +98,58 @@ if submit and query.strip():
             persist_directory=chroma_db_path,
             collection_name="nonprofit_reports"
         )
-        #####Debugging line #############
-        # Add the document count display here
+
+        ##### Hypothetical Question Generation #####
+        st.subheader("Hypothetical Question Generation")
+
+        # Define the hypothetical question prompt
+        hypo_system_prompt = """
+        You are an expert assistant for humanitarian information from ReliefWeb.
+        Given a user's query, rewrite or refine the query into a hypothetical question
+        that is more specific and informative, while retaining the original intent.
+        """
+        hypo_prompt = ChatPromptTemplate.from_messages([
+            ("system", hypo_system_prompt),
+            ("human", "{question}")
+        ])
+        hypo_llm = ChatGoogleGenerativeAI(model=selected_model, temperature=0.5, api_key=google_api_key)
+        hypo_chain = hypo_prompt | hypo_llm | StrOutputParser()
+
+        # Generate the hypothetical question
+        with st.spinner("Generating hypothetical question..."):
+            hypothetical_question = hypo_chain.invoke({"question": query})
+            st.write("**Hypothetical Question:**", hypothetical_question)
+
+        # Use the hypothetical question for retrieval
+        query = hypothetical_question
+        ##### End Hypothetical Question Generation #####
+
+        # Display the total number of documents in the Chroma database
         st.subheader("Chroma Database Document Count")
         document_count = len(vectorstore._collection.get()['documents'])
         st.write(f"Total documents in Chroma database: {document_count}")
-        # Retrieve relevant documents directly using the user query
+
+        # Retrieve relevant documents directly using the hypothetical question
         with st.spinner("Retrieving relevant documents..."):
             docs = vectorstore.similarity_search(query, k=max_docs)
-        
-       # Calculate similarity scores for retrieved documents only
+
+        # Calculate similarity scores for retrieved documents only
         st.subheader("Similarity Scores of Retrieved Documents")
         query_embedding = embeddings.embed_query(query)  # Compute the query embedding
         retrieved_scores = []
-        
+
         # Iterate over the retrieved documents and compute similarity scores
         for doc in docs:
             doc_embedding = embeddings.embed_query(doc.page_content)  # Recompute document embedding
             similarity = np.dot(query_embedding, doc_embedding)  # Calculate similarity
             retrieved_scores.append((doc, similarity))
-        
+
         # Display the retrieved documents and their similarity scores
         for i, (doc, score) in enumerate(retrieved_scores, start=1):
             st.write(f"**Document {i}:**")
             st.write(f"**Similarity Score:** {score:.4f}")
             st.write(f"**Metadata:** {doc.metadata}")
             st.write(f"**Content Preview:** {doc.page_content[:500]}...")  # Show the first 500 characters
-
-
-        
-        #####Debugging line #############
 
         # Prepare the final chain using the selected model
         final_llm = ChatGoogleGenerativeAI(model=selected_model, temperature=temperature, api_key=google_api_key)
@@ -149,34 +171,3 @@ if submit and query.strip():
         # Display the final answer
         st.subheader("Agent Response")
         st.write(response)
-
-        # Display the retrieved documents with metadata
-        st.subheader("Retrieved Documents")
-        for i, doc in enumerate(docs, start=1):
-            metadata = doc.metadata or {}
-            title = metadata.get('title', 'No title available')
-            page_label = metadata.get('page_label', 'N/A')
-            created_date = metadata.get('date.created', 'N/A')
-            country = metadata.get('country', 'N/A')
-        
-            st.write(f"**Document {i}: {title}**")
-            st.write(f"**Page #:** {page_label}")
-            st.write(f"**Date Created:** {created_date}")
-            st.write(f"**Country:** {country}")
-        
-            # Link to open the PDF if available and embed a viewer
-            if 'file_path' in metadata:
-                file_name = metadata['file_path'].split('/')[-1]
-                public_url = f"https://storage.googleapis.com/{bucket_name}/analysis/{file_name}"  # Adjust as needed
-            
-                # Display a clickable link to open the PDF in a new tab
-                st.markdown(
-                    f"[**Open PDF**]({public_url})",
-                    unsafe_allow_html=True,
-                )
-            
-            # Expanders to show page content and metadata JSON
-            with st.expander("Show Page Content"):
-                st.write(doc.page_content)
-            with st.expander("Show Metadata JSON"):
-                st.json(metadata)
