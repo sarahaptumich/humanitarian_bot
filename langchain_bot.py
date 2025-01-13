@@ -13,7 +13,6 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain import hub
 import gcsfs
 from google.cloud import storage
-import numpy as np
 
 # Configure Streamlit page
 st.set_page_config(page_title="Humanitarian ChatBot", page_icon=":earth_americas:")
@@ -56,10 +55,9 @@ max_docs = st.sidebar.slider("Maximum number of documents", 1, 10, 3, 1)
 
 # User input
 st.write("Ask a question about the nonprofit reports:")
-query = st.text_input("Your question", "")  # Input for user query
-submit = st.button("Submit")  # Button to submit the query
+query = st.text_input("Your question", "")
+submit = st.button("Submit")
 
-# Check if the user submitted a query
 if submit and query.strip():
     google_api_key = st.secrets["general"].get("GOOGLE_API_KEY")
     
@@ -100,43 +98,9 @@ if submit and query.strip():
             collection_name="nonprofit_reports"
         )
 
-        # Debug: Display all documents in the database
-        st.subheader("Chroma Database Debugging")
-        all_docs = vectorstore._collection.get(include=['metadatas', 'documents'])
-        st.write(f"Total documents in Chroma collection: {len(all_docs['documents'])}")
-        for i, (doc, metadata) in enumerate(zip(all_docs['documents'], all_docs['metadatas']), start=1):
-            st.write(f"**Document {i}:**")
-            st.write(f"**Metadata:** {metadata}")
-            st.write(f"**Content Preview:** {doc[:500]}...")  # Display first 500 characters of content
-
-        # Debug: Query embedding
-        query_embedding = embeddings.embed_query(query)
-        st.write("Query Embedding Vector (first 10 values):", query_embedding[:10])
-
-        # Debug: Calculate similarity scores for all documents
-        st.subheader("Document Similarity Scores")
-        doc_embeddings = vectorstore._collection.get_embeddings()
-        similarity_scores = [
-            np.dot(query_embedding, doc_embedding) for doc_embedding in doc_embeddings
-        ]
-        sorted_scores = sorted(
-            enumerate(similarity_scores),
-            key=lambda x: x[1],
-            reverse=True
-        )
-        for idx, score in sorted_scores:
-            metadata = all_docs['metadatas'][idx]
-            st.write(f"Document {idx + 1}: Score={score:.4f}, Metadata={metadata}")
-
         # Retrieve relevant documents directly using the user query
         with st.spinner("Retrieving relevant documents..."):
             docs = vectorstore.similarity_search(query, k=max_docs)
-        
-        # Debug: Retrieved documents and their scores
-        st.subheader("Retrieved Documents with Scores")
-        for i, doc in enumerate(docs, start=1):
-            st.write(f"**Document {i} Metadata:** {doc.metadata}")
-            st.write(f"**Content Preview:** {doc.page_content[:500]}...")  # Display first 500 characters
 
         # Prepare the final chain using the selected model
         final_llm = ChatGoogleGenerativeAI(model=selected_model, temperature=temperature, api_key=google_api_key)
@@ -189,4 +153,3 @@ if submit and query.strip():
                 st.write(doc.page_content)
             with st.expander("Show Metadata JSON"):
                 st.json(metadata)
-
