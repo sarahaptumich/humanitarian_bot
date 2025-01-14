@@ -5,9 +5,9 @@ st.set_page_config(page_title="Humanitarian ChatBot", page_icon=":earth_americas
 st.title("Humanitarian ChatBot")
 
 # Sidebar settings
-st.sidebar.image("humanitarian_bot.jpeg", use_column_width=True)
+# Sidebar settings
+st.sidebar.image("humanitarian_bot.jpeg", use_container_width=True)
 st.sidebar.header("Settings")
-
 # Model selection and configuration
 model_options = ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-1.5-pro"]
 selected_model = st.sidebar.selectbox("Select LLM Model for Answer", model_options, index=0)
