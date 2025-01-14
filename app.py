@@ -33,7 +33,7 @@ def generate_hypothetical_question(query, model, temperature, api_key):
         ("system", prompt_template),
         ("human", "{question}")
     ])
-    llm = ChatGoogleGenerativeAI(model=model, temperature=temperature, api_key=api_key)
+    llm = ChatGoogleGenerativeAI(model=model, temperature=0.60, api_key=api_key)
     chain = prompt | llm | StrOutputParser()
     return chain.invoke({"question": query})
 
