@@ -60,17 +60,39 @@ query = st.text_input("Your question", "")
 submit = st.button("Submit")
 
 # Cache ChromaDB Initialization
-@st.cache_data(persist="disk")
-def initialize_chroma(embedding_model_name, chroma_db_path):
-    # Initialize embeddings
-    embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
-    # Initialize vector store
+@st.cache_resource
+def initialize_chroma_from_gcs(bucket_name, chroma_db_path):
+    # Access GCS bucket and download files locally
+    fs = gcsfs.GCSFileSystem()
+
+    # Ensure local directory exists
+    os.makedirs(chroma_db_path, exist_ok=True)
+
+    # Download files from GCS bucket to local directory
+    try:
+        files = fs.find(f"{bucket_name}/chroma_db_persist/")
+        for file_path in files:
+            local_file_path = os.path.join(chroma_db_path, os.path.basename(file_path))
+            fs.get(file_path, local_file_path)
+        st.success(f"Downloaded {len(files)} files from GCS.")
+    except Exception as e:
+        st.error(f"Error accessing or downloading from bucket: {e}")
+        raise
+
+    # Initialize embeddings and vector store
+    embeddings = HuggingFaceEmbeddings(model_name="BAAI/bge-base-en-v1.5")
     vectorstore = Chroma(
         embedding_function=embeddings,
         persist_directory=chroma_db_path,
         collection_name="nonprofit_reports"
     )
+
     return vectorstore, embeddings
+
+# Initialize the Chroma database
+bucket_name = "humanitarian_bucket"
+chroma_db_path = "/tmp/chroma_db_persist"
+vectorstore, embeddings = initialize_chroma_from_gcs(bucket_name, chroma_db_path)
 
 if submit and query.strip():
     google_api_key = st.secrets["general"].get("GOOGLE_API_KEY")
@@ -86,32 +108,8 @@ if submit and query.strip():
             "Keep your answer to ten sentences maximum, be clear and concise. Always end by inviting the user to ask more!"
         )
 
-        # Access GCS bucket and download files locally
-        fs = gcsfs.GCSFileSystem()
-        bucket_name = "humanitarian_bucket"
-        chroma_db_path = "/tmp/chroma_db_persist"  # Local directory for Chroma persistence
-
-        # Ensure local directory exists
-        os.makedirs(chroma_db_path, exist_ok=True)
-
-        try:
-            # List files in the GCS bucket and download to local directory
-            files = fs.find(f"{bucket_name}/chroma_db_persist/")
-            for file_path in files:
-                local_file_path = os.path.join(chroma_db_path, os.path.basename(file_path))
-                fs.get(file_path, local_file_path)
-            st.success(f"Downloaded {len(files)} files from GCS.")
-        except Exception as e:
-            st.error(f"Error accessing or downloading from bucket: {e}")
-
-        # Initialize Chroma database
-        vectorstore, embeddings = initialize_chroma("BAAI/bge-base-en-v1.5", chroma_db_path)
-        st.success("Chroma database initialized.")
-
         ##### Hypothetical Question Generation #####
         st.subheader("Hypothetical Question Generation")
-
-        # Define the hypothetical question prompt
         hypo_system_prompt = """
         You are an expert assistant for humanitarian information from ReliefWeb.
         Given a user's query, rewrite or refine the query into a hypothetical question
@@ -124,59 +122,37 @@ if submit and query.strip():
         hypo_llm = ChatGoogleGenerativeAI(model=selected_model, temperature=0.5, api_key=google_api_key)
         hypo_chain = hypo_prompt | hypo_llm | StrOutputParser()
 
-        # Generate the hypothetical question
         with st.spinner("Generating hypothetical question..."):
             hypothetical_question = hypo_chain.invoke({"question": query})
             st.write("**Hypothetical Question:**", hypothetical_question)
 
-        # Use the hypothetical question for retrieval
         query = hypothetical_question
-        ##### End Hypothetical Question Generation #####
 
-        # Display the total number of documents in the Chroma database
-        st.subheader("Chroma Database Document Count")
-        document_count = len(vectorstore._collection.get()['documents'])
-        st.write(f"Total documents in Chroma database: {document_count}")
-
-        # Retrieve relevant documents directly using the hypothetical question
+        ##### Retrieve Documents #####
+        st.subheader("Retrieving Documents")
         with st.spinner("Retrieving relevant documents..."):
             docs = vectorstore.similarity_search(query, k=max_docs)
 
-        # Calculate similarity scores for retrieved documents only
-        st.subheader("Similarity Scores of Retrieved Documents")
-        query_embedding = embeddings.embed_query(query)  # Compute the query embedding
-        retrieved_scores = []
-
-        # Iterate over the retrieved documents and compute similarity scores
-        for doc in docs:
-            doc_embedding = embeddings.embed_query(doc.page_content)  # Recompute document embedding
-            similarity = np.dot(query_embedding, doc_embedding)  # Calculate similarity
-            retrieved_scores.append((doc, similarity))
-
-        # Display the retrieved documents and their similarity scores
-        for i, (doc, score) in enumerate(retrieved_scores, start=1):
+        ##### Display Results #####
+        for i, doc in enumerate(docs, start=1):
             st.write(f"**Document {i}:**")
-            st.write(f"**Similarity Score:** {score:.4f}")
             st.write(f"**Metadata:** {doc.metadata}")
             st.write(f"**Content Preview:** {doc.page_content[:500]}...")  # Show the first 500 characters
 
-        # Prepare the final chain using the selected model
+        ##### Generate Final Answer #####
         final_llm = ChatGoogleGenerativeAI(model=selected_model, temperature=temperature, api_key=google_api_key)
         retrieval_qa_chat_prompt = hub.pull("langchain-ai/retrieval-qa-chat")
 
-        # Create the chain to combine documents and generate the final answer
         combine_docs_chain = create_stuff_documents_chain(
             llm=final_llm,
             prompt=retrieval_qa_chat_prompt
         )
 
-        # Generate the final answer by invoking the chain with the context and user input
         with st.spinner("Creating final answer..."):
             response = combine_docs_chain.invoke({
                 "context": docs,
                 "input": f"{system_prompt}\n\nUser question: {query}"
             })
 
-        # Display the final answer
         st.subheader("Agent Response")
         st.write(response)
