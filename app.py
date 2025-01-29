@@ -39,8 +39,8 @@ if submit and query.strip():
                 response.raise_for_status()
                 similar_docs = response.json().get("results", [])
 
-                # Debug: Show raw API response
-                st.write("**🔍 Raw API Response:**", similar_docs)
+                # # Debug: Show raw API response
+                # st.write("**🔍 Raw API Response:**", similar_docs)
 
             except requests.exceptions.RequestException as e:
                 st.error(f"❌ Error calling similarity API: {e}")
@@ -70,17 +70,20 @@ if submit and query.strip():
                 try:
                     final_response = final_llm.invoke(retrieval_prompt)
                     
-                    # Extract the correct response field
-                    final_answer = final_response.get("content", "⚠️ No response received from Gemini.")
-
+                    # Extract content from AIMessage object
+                    if hasattr(final_response, "content"):
+                        final_answer = final_response.content
+                    else:
+                        final_answer = "⚠️ No response received from Gemini."
+            
                     # Display the agent response
                     st.subheader("🧠 Agent Response")
                     st.write(final_answer)
-
+            
                     # Debug: Show the raw response
                     st.subheader("🔍 Debugging Raw LLM Response")
                     st.write(final_response)
-
+            
                     ##### Step 4: Display Retrieved Documents #####
                     st.subheader("📑 Retrieved Documents")
                     for i, doc in enumerate(similar_docs, start=1):
@@ -89,7 +92,7 @@ if submit and query.strip():
                         st.write(f"🔹 **Source:** {doc.get('source', 'Unknown source')}")
                         st.write(f"🌍 **URL:** [Click here]({doc.get('URL')})")
                         st.write(f"📝 **Content Preview:** {doc.get('combined_details', 'No details available')[:500]}...")  
-
+            
                 except Exception as e:
                     st.error(f"❌ Error generating response with Gemini: {e}")
 
