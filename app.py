@@ -74,8 +74,14 @@ if submit and query.strip():
             with st.spinner("Creating final answer..."):
                 try:
                     final_answer = final_llm.invoke(retrieval_prompt)
+                    
+                    # Debugging the response
+                    st.subheader("Raw LLM Response")
+                    st.write(final_answer)  # Print raw response
+                    
                     st.subheader("Agent Response")
                     st.write(final_answer)
+            
                     # Display Retrieved Documents
                     st.subheader("Retrieved Documents")
                     for i, doc in enumerate(similar_docs, start=1):
@@ -83,6 +89,8 @@ if submit and query.strip():
                         st.write(f"**Title:** {doc.get('title', 'No title available')}")
                         st.write(f"**Source:** {doc.get('source', 'Unknown source')}")
                         st.write(f"**URL:** [Click here]({doc.get('URL')})")
-                        st.write(f"**Content Preview:** {doc.get('combined_details', 'No details available')[:500]}...")  # Show preview    
+                        st.write(f"**Content Preview:** {doc.get('combined_details', 'No details available')[:500]}...")  
+            
                 except Exception as e:
                     st.error(f"Error generating response with Gemini: {e}")
+
