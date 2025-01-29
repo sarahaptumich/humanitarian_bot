@@ -90,7 +90,7 @@ if submit and query.strip():
                         st.markdown(f"### **Document {i}**")
                         st.write(f"📌 **Title:** {doc.get('title', 'No title available')}")
                         st.write(f"🔹 **Source:** {doc.get('source', 'Unknown source')}")
-                        st.write(f"🔹 **Page:** {doc.get("page_label', 'Unknown source')}")
+                        st.write(f"🔹 **Page:** {doc.get('page_label', 'Unknown source')}")
                         st.write(f"🌍 **URL:** [Click here]({doc.get('URL')})")
                         st.write(f"📝 **Content Preview:** {doc.get('document', 'No details available')[:500]}...")  
             
