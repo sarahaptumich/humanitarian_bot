@@ -2,9 +2,6 @@ import os
 import streamlit as st
 import requests
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
-from langchain import hub
 
 # Configure Streamlit page
 st.set_page_config(page_title="Humanitarian ChatBot", page_icon=":earth_americas:")
@@ -21,42 +18,40 @@ temperature = st.sidebar.slider("Model Temperature", 0.0, 1.0, 0.5, 0.05)
 k = st.sidebar.slider("Number of Similar Documents (k)", 1, 10, 5, 1)
 
 # User input
-st.write("Ask a question about the nonprofit reports:")
+st.write("### Ask a question about the nonprofit reports:")
 query = st.text_input("Your question", "")
 submit = st.button("Submit")
 
-# Similarity API URL
-SIMILARITY_API_URL= st.secrets["general"].get("SIMILARITY_API")
+# Load API secrets
+SIMILARITY_API_URL = st.secrets["general"].get("SIMILARITY_API")
+GOOGLE_API_KEY = st.secrets["general"].get("GOOGLE_API_KEY")
 
 if submit and query.strip():
-    google_api_key = st.secrets["general"].get("GOOGLE_API_KEY")
-
-    if not google_api_key:
-        st.error("Google API key not found. Please set the GOOGLE_API_KEY in your secrets.")
+    if not GOOGLE_API_KEY:
+        st.error("❌ Google API key not found. Please set the GOOGLE_API_KEY in your secrets.")
     else:
-        ##### Call Similarity API #####
-        st.subheader("Retrieving Similar Documents")
-        with st.spinner("Finding similar documents..."):
+        ##### Step 1: Call Similarity API #####
+        st.subheader("📚 Retrieving Similar Documents")
+        with st.spinner("Finding relevant documents..."):
             payload = {"text": query, "k": k}
             try:
                 response = requests.post(SIMILARITY_API_URL, json=payload)
                 response.raise_for_status()
                 similar_docs = response.json().get("results", [])
-                
-                # # Debug: Show raw API response
-                # st.write("**Raw API Response:**", similar_docs)
+
+                # Debug: Show raw API response
+                st.write("**🔍 Raw API Response:**", similar_docs)
 
             except requests.exceptions.RequestException as e:
-                st.error(f"Error calling similarity API: {e}")
+                st.error(f"❌ Error calling similarity API: {e}")
                 st.stop()
 
-        ##### Extract "combined_details" from API response #####
+        ##### Step 2: Extract "combined_details" from API response #####
         if similar_docs:
-            context_details = "\n\n".join([doc.get("document", "No details available") for doc in similar_docs])
+            context_details = "\n\n".join([doc.get("combined_details", "No details available") for doc in similar_docs])
 
-
-            ##### Generate Final Answer Using Gemini #####
-            st.subheader("Generating Final Answer")
+            ##### Step 3: Generate Final Answer Using Gemini #####
+            st.subheader("🤖 Generating Final Answer")
             
             # System prompt for Gemini
             system_prompt = (
@@ -67,30 +62,34 @@ if submit and query.strip():
             )
 
             # Combine system prompt and context details
-            retrieval_prompt = f"{system_prompt}\n\nContext:\n{context_details}\n\nUser question: {query}"
+            retrieval_prompt = f"{system_prompt}\n\n### Context:\n{context_details}\n\n### User question:\n{query}"
 
             # Use Gemini to generate the response
-            final_llm = ChatGoogleGenerativeAI(model=selected_model, temperature=temperature, api_key=google_api_key)
+            final_llm = ChatGoogleGenerativeAI(model=selected_model, temperature=temperature, api_key=GOOGLE_API_KEY)
             with st.spinner("Creating final answer..."):
                 try:
-                    final_answer = final_llm.invoke(retrieval_prompt)
+                    final_response = final_llm.invoke(retrieval_prompt)
                     
-                    # Debugging the response
-                    st.subheader("Raw LLM Response")
-                    st.write(final_answer)  # Print raw response
-                    
-                    st.subheader("Agent Response")
+                    # Extract the correct response field
+                    final_answer = final_response.get("content", "⚠️ No response received from Gemini.")
+
+                    # Display the agent response
+                    st.subheader("🧠 Agent Response")
                     st.write(final_answer)
-            
-                    # Display Retrieved Documents
-                    st.subheader("Retrieved Documents")
+
+                    # Debug: Show the raw response
+                    st.subheader("🔍 Debugging Raw LLM Response")
+                    st.write(final_response)
+
+                    ##### Step 4: Display Retrieved Documents #####
+                    st.subheader("📑 Retrieved Documents")
                     for i, doc in enumerate(similar_docs, start=1):
-                        st.write(f"**Document {i}:**")
-                        st.write(f"**Title:** {doc.get('title', 'No title available')}")
-                        st.write(f"**Source:** {doc.get('source', 'Unknown source')}")
-                        st.write(f"**URL:** [Click here]({doc.get('URL')})")
-                        st.write(f"**Content Preview:** {doc.get('combined_details', 'No details available')[:500]}...")  
-            
+                        st.markdown(f"### **Document {i}**")
+                        st.write(f"📌 **Title:** {doc.get('title', 'No title available')}")
+                        st.write(f"🔹 **Source:** {doc.get('source', 'Unknown source')}")
+                        st.write(f"🌍 **URL:** [Click here]({doc.get('URL')})")
+                        st.write(f"📝 **Content Preview:** {doc.get('combined_details', 'No details available')[:500]}...")  
+
                 except Exception as e:
-                    st.error(f"Error generating response with Gemini: {e}")
+                    st.error(f"❌ Error generating response with Gemini: {e}")
 
