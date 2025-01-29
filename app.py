@@ -46,6 +46,24 @@ if submit and query.strip():
                 st.error(f"Error calling similarity API: {e}")
                 st.stop()
 
+    # Debug API Response
+st.subheader("Debugging Similarity API Response")
+
+with st.spinner("Fetching data from Similarity API..."):
+    payload = {"text": query, "k": k}
+    try:
+        response = requests.post(SIMILARITY_API_URL, json=payload)
+        response.raise_for_status()
+        similar_docs = response.json().get("results", [])
+
+        # Print full API response for debugging
+        st.write("**Raw API Response:**", similar_docs)
+
+    except requests.exceptions.RequestException as e:
+        st.error(f"Error calling similarity API: {e}")
+        st.stop()
+
+
         ##### Display Retrieved Documents #####
         for i, doc in enumerate(similar_docs, start=1):
             st.write(f"**Document {i}:**")
