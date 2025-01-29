@@ -42,38 +42,31 @@ if submit and query.strip():
                 response = requests.post(SIMILARITY_API_URL, json=payload)
                 response.raise_for_status()
                 similar_docs = response.json().get("results", [])
+                
+                # Debug: Show raw API response
+                st.write("**Raw API Response:**", similar_docs)
+
             except requests.exceptions.RequestException as e:
                 st.error(f"Error calling similarity API: {e}")
                 st.stop()
 
-    # Debug API Response
-st.subheader("Debugging Similarity API Response")
-
-with st.spinner("Fetching data from Similarity API..."):
-    payload = {"text": query, "k": k}
-    try:
-        response = requests.post(SIMILARITY_API_URL, json=payload)
-        response.raise_for_status()
-        similar_docs = response.json().get("results", [])
-
-        # Print full API response for debugging
-        st.write("**Raw API Response:**", similar_docs)
-
-    except requests.exceptions.RequestException as e:
-        st.error(f"Error calling similarity API: {e}")
-        st.stop()
-
-
-        ##### Display Retrieved Documents #####
-        for i, doc in enumerate(similar_docs, start=1):
-            st.write(f"**Document {i}:**")
-            st.write(f"**Title:** {doc.get('title')}")
-            st.write(f"**Content Preview:** {doc.get('content')[:500]}...")  # Show the first 500 characters
-
-        ##### Generate Final Answer Using Gemini #####
+        ##### Extract "combined_details" from API response #####
         if similar_docs:
+            context_details = "\n\n".join([doc.get("combined_details", "No details available") for doc in similar_docs])
+
+            # Display Retrieved Documents
+            st.subheader("Retrieved Documents")
+            for i, doc in enumerate(similar_docs, start=1):
+                st.write(f"**Document {i}:**")
+                st.write(f"**Title:** {doc.get('title', 'No title available')}")
+                st.write(f"**Source:** {doc.get('source', 'Unknown source')}")
+                st.write(f"**URL:** [Click here]({doc.get('URL')})")
+                st.write(f"**Content Preview:** {doc.get('combined_details', 'No details available')[:500]}...")  # Show preview
+
+            ##### Generate Final Answer Using Gemini #####
             st.subheader("Generating Final Answer")
-            context = "\n\n".join([doc.get("content") for doc in similar_docs])
+            
+            # System prompt for Gemini
             system_prompt = (
                 "You are a Q&A assistant dedicated to providing accurate, up-to-date information "
                 "from ReliefWeb, a humanitarian platform managed by OCHA. Use the provided context documents "
@@ -81,7 +74,8 @@ with st.spinner("Fetching data from Similarity API..."):
                 "Keep your answer to ten sentences maximum, be clear and concise. Always end by inviting the user to ask more!"
             )
 
-            retrieval_prompt = f"{system_prompt}\n\nContext:\n{context}\n\nUser question: {query}"
+            # Combine system prompt and context details
+            retrieval_prompt = f"{system_prompt}\n\nContext:\n{context_details}\n\nUser question: {query}"
 
             # Use Gemini to generate the response
             final_llm = ChatGoogleGenerativeAI(model=selected_model, temperature=temperature, api_key=google_api_key)
