@@ -43,8 +43,8 @@ if submit and query.strip():
                 response.raise_for_status()
                 similar_docs = response.json().get("results", [])
                 
-                # Debug: Show raw API response
-                st.write("**Raw API Response:**", similar_docs)
+                # # Debug: Show raw API response
+                # st.write("**Raw API Response:**", similar_docs)
 
             except requests.exceptions.RequestException as e:
                 st.error(f"Error calling similarity API: {e}")
