@@ -52,7 +52,7 @@ if submit and query.strip():
 
         ##### Extract "combined_details" from API response #####
         if similar_docs:
-            context_details = "\n\n".join([doc.get("combined_details", "No details available") for doc in similar_docs])
+            context_details = "\n\n".join([doc.get("document", "No details available") for doc in similar_docs])
 
             # Display Retrieved Documents
             st.subheader("Retrieved Documents")
