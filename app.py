@@ -54,14 +54,6 @@ if submit and query.strip():
         if similar_docs:
             context_details = "\n\n".join([doc.get("document", "No details available") for doc in similar_docs])
 
-            # Display Retrieved Documents
-            st.subheader("Retrieved Documents")
-            for i, doc in enumerate(similar_docs, start=1):
-                st.write(f"**Document {i}:**")
-                st.write(f"**Title:** {doc.get('title', 'No title available')}")
-                st.write(f"**Source:** {doc.get('source', 'Unknown source')}")
-                st.write(f"**URL:** [Click here]({doc.get('URL')})")
-                st.write(f"**Content Preview:** {doc.get('combined_details', 'No details available')[:500]}...")  # Show preview
 
             ##### Generate Final Answer Using Gemini #####
             st.subheader("Generating Final Answer")
@@ -84,5 +76,13 @@ if submit and query.strip():
                     final_answer = final_llm.invoke(retrieval_prompt)
                     st.subheader("Agent Response")
                     st.write(final_answer)
+                    # Display Retrieved Documents
+                    st.subheader("Retrieved Documents")
+                    for i, doc in enumerate(similar_docs, start=1):
+                        st.write(f"**Document {i}:**")
+                        st.write(f"**Title:** {doc.get('title', 'No title available')}")
+                        st.write(f"**Source:** {doc.get('source', 'Unknown source')}")
+                        st.write(f"**URL:** [Click here]({doc.get('URL')})")
+                        st.write(f"**Content Preview:** {doc.get('combined_details', 'No details available')[:500]}...")  # Show preview    
                 except Exception as e:
                     st.error(f"Error generating response with Gemini: {e}")
