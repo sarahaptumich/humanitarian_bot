@@ -80,9 +80,9 @@ if submit and query.strip():
                     st.subheader("🧠 Agent Response")
                     st.write(final_answer)
             
-                    # Debug: Show the raw response
-                    st.subheader("🔍 Debugging Raw LLM Response")
-                    st.write(final_response)
+                    # # Debug: Show the raw response
+                    # st.subheader("🔍 Debugging Raw LLM Response")
+                    # st.write(final_response)
             
                     ##### Step 4: Display Retrieved Documents #####
                     st.subheader("📑 Retrieved Documents")
