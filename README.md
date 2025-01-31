@@ -5,11 +5,11 @@ This repository provides a full solution for **processing PDFs**, storing them i
 ---
 
 ## Features
-**Extract text from PDFs** (page-wise)  
-**Store in Google BigQuery**  
-**Generate embeddings for search**  
-**Create a similarity search API**  
-**Use retrieved documents to query an LLM (Gemini)**  
+-  **Extract text from PDFs** (page-wise)  
+-  **Store in Google BigQuery**  
+-  **Generate embeddings for search**  
+-  **Create a similarity search API**  
+-  **Use retrieved documents to query an LLM (Gemini)**  
 
 
 
