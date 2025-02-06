@@ -8,7 +8,7 @@ st.set_page_config(page_title="Owl 1.0", page_icon=":owl:")
 st.title("Owl 1.0")
 
 # Sidebar settings
-st.sidebar.image("humanitarian_bot.jpeg")
+st.sidebar.image("owl_logo.jpg")
 st.sidebar.header("Settings")
 
 # Model selection and configuration
