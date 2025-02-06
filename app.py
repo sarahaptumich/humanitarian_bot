@@ -19,7 +19,7 @@ temperature = st.sidebar.slider("Model Temperature", 0.0, 1.0, 0.5, 0.05)
 k = st.sidebar.slider("Number of Similar Documents (k)", 1, 10, 5, 1)
 
 # User input
-st.write("### Ask a question about nonprofit's reports:")
+st.write("### Ask a question about nonprofits reports:")
 query = st.text_input("Your question", "")
 submit = st.button("Submit")
 
