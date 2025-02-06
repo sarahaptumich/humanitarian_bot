@@ -4,11 +4,11 @@ import requests
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 # Configure Streamlit page
-st.set_page_config(page_title="Humanitarian ChatBot", page_icon=":earth_americas:")
+st.set_page_config(page_title="Owl 1.0", page_icon=":owl:")
 st.title("Humanitarian ChatBot")
 
 # Sidebar settings
-st.sidebar.image("humanitarian_bot.jpeg")
+st.sidebar.image("owl_logo.jpeg")
 st.sidebar.header("Settings")
 
 # Model selection and configuration
