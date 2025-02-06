@@ -5,7 +5,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 
 # Configure Streamlit page
 st.set_page_config(page_title="Owl 1.0", page_icon=":owl:")
-st.title("Humanitarian ChatBot")
+st.title("Owl 1.0")
 
 # Sidebar settings
 st.sidebar.image("owl_logo.jpeg")
